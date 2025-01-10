@@ -12,6 +12,8 @@ class PostController extends Controller
     {
         $posts = Post::with('user')->latest()->paginate(10);
         return view('posts.index', compact('posts'));
+
+        
     }
 
     public function create()
