@@ -1,0 +1,82 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ominimo-app
+    container_name: ominimo-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./.env:/var/www/.env
+    environment:
+      - APP_ENV=local
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: ominimo-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - app-network        
+
+  node:
+    platform: linux/arm64/v8 #this line is optional if you are using Mac Silicon chip (M1/M2/M3)
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    image: ominimo-node
+    container_name: ominimo-node
+    ports:
+    - "3000:3000"
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - /var/www/node_modules
+    networks:
+      - app-network
+
+  db:
+    platform: linux/x86_64 #this line is optional if you are using Mac Silicon chip (M1/M2/M3)
+    image: mysql:8.0
+    container_name: ominimo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - app-network
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ominimo-phpmyadmin
+    environment:
+      - PMA_HOST=db
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
