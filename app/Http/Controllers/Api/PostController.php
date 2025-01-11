@@ -20,7 +20,7 @@ class PostController extends Controller
         }
 
         // Pagination
-        $posts = $query->paginate(2)->onEachSide(3); // Adjust per page limit as needed
+        $posts = $query->paginate(1)->onEachSide(1); // Adjust per page limit as needed
 
         return response()->json($posts);
 
